@@ -1,4 +1,5 @@
 *.pyc
-template-python-project/data/*
-template-python-project/notebooks/.ipynb_checkpoints/*
-template-python-project/logs/*
+spea/data/*
+spea/notebooks/.ipynb_checkpoints/*
+spea/logs/*
+.idea/*
