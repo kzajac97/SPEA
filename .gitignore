@@ -1,0 +1,4 @@
+*.pyc
+template-python-project/data/*
+template-python-project/notebooks/.ipynb_checkpoints/*
+template-python-project/logs/*
