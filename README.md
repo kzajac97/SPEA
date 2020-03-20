@@ -1,14 +1,7 @@
-# Template AI Project
+# SPEA
 
-Template project created in order to speed-up process
-of creating AI python based projects
+Strength Pareto Evolutionary Optimization Algorithm
 
-### Dockerfile 
+## Publication
 
-
-### Anaconda environment
-
-To install all required packages in conda environment run:
-```bash
-$ conda create --name <env_name> --file <requirements.txt>
-```
+Algorithm description: [SPEA Paper](https://sop.tik.ee.ethz.ch/publicationListFiles/zt1998a.pdf)
