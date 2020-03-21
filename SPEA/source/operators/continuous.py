@@ -37,9 +37,3 @@ def mutation(individual: np.array, mutation_strength: float = 0.1) -> np.array:
     """
     offset = np.random.randn(individual.shape[0])
     return mutation_strength * offset + individual
-
-
-@jit
-def selection(population: np.array) -> np.array:
-    ...
-
