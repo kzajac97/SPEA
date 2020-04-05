@@ -19,6 +19,24 @@ def _compare_in_dims(
     comparison_operation: Callable[[np.array, np.array], bool]
 ) -> np.array:
     """
+    Compares array representing single solutions to population of solutions with any callable comparison function
+
+    example:
+        >>> results = _compare_in_dims(np.array([5, 5]), np.array([[1, 1], [10, 10], [1, 10], [10, 1]]), np.less_equal)
+
+    results will be equal to:
+            `[[False, False],
+              [True, True],
+              [False, True],
+              [True, False]]`
+
+    :param single_solution: array in shape (N, ) where N is number of dimensions in optimization objective
+    :param compared_solutions: population array in shape (POPULATION_SIZE, N, ) to be compared
+    :param comparison_operation: callable used to compare, must handle arrays and return truth values
+
+    :return: array of truth values in shape (POPULATION_SIZE, N, )
+             where each element of array corresponds to comparison in solution n dim item to population
+             member with it's index and corresponding n dim
     """
     results = [comparison_operation(single_solution,
                                     compared_solutions[item_index, :])
@@ -31,6 +49,7 @@ def _compare_in_dims(
 def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> Optional[bool]:
     """
     Boolean function testing if solution in dominated in Pareto's sense
+    Returns true if there no solution's in population with better objective value in each dimension
 
     :param single_solution: solution to compare
     :param compared_solutions: array of population solution will be compared to
@@ -64,11 +83,11 @@ def is_dominated_solution(single_solution: np.array, compared_solutions: np.arra
 
 def collect_non_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
     """
+    :param single_solution: solution to compare
+    :param compared_solutions: array of population solution will be compared to
+    :param mode: optimization mode, valid options are `min` or `max`
 
-    :param single_solution:
-    :param compared_solutions:
-    :param mode:
-    :return:
+    :return: solutions which are not dominated by given single solution
     """
     is_dominated = np.any(_compare_in_dims(
         single_solution,
@@ -80,6 +99,13 @@ def collect_non_dominated_solutions(single_solution: np.array, compared_solution
 
 
 def collect_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
+    """
+    :param single_solution: solution to compare
+    :param compared_solutions: array of population solution will be compared to
+    :param mode: optimization mode, valid options are `min` or `max`
+
+    :return: Returns solutions which are dominated by given single solution
+    """
     is_dominated = np.any(_compare_in_dims(
         single_solution,
         compared_solutions,
@@ -90,6 +116,16 @@ def collect_dominated_solutions(single_solution: np.array, compared_solutions: n
 
 
 def assign_pareto_strength(single_solution: np.array, compared_solutions: np.array, mode: str) -> int:
+    """
+    Assigns strength to each solution based on the number
+    of other solutions it dominates over in it's population
+
+    :param single_solution: solution to compare
+    :param compared_solutions: array of population solution will be compared to
+    :param mode: optimization mode, valid options are `min` or `max`
+
+    :return: strength corresponding to given single_solution in given population
+    """
     dominated_solutions = collect_dominated_solutions(
         single_solution,
         compared_solutions,
