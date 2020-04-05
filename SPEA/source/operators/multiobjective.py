@@ -14,9 +14,7 @@ _OPTIMIZATION_MODE_SELECTION_MAPPING = {
 
 @jit
 def _compare_in_dims(
-    single_solution: np.array,
-    compared_solutions: np.array,
-    comparison_operation: Callable[[np.array, np.array], bool]
+    single_solution: np.array, compared_solutions: np.array, comparison_operation: Callable[[np.array, np.array], bool],
 ) -> np.array:
     """
     Compares array representing single solutions to population of solutions with any callable comparison function
@@ -38,9 +36,10 @@ def _compare_in_dims(
              where each element of array corresponds to comparison in solution n dim item to population
              member with it's index and corresponding n dim
     """
-    results = [comparison_operation(single_solution,
-                                    compared_solutions[item_index, :])
-               for item_index in range(compared_solutions.shape[0])]
+    results = [
+        comparison_operation(single_solution, compared_solutions[item_index, :])
+        for item_index in range(compared_solutions.shape[0])
+    ]
 
     return np.array(results)
 
@@ -61,12 +60,11 @@ def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.
         logger.error(f"{mode} is not valid optimization mode!")
         return
 
-    return np.all(np.any(
-            _compare_in_dims(
-                single_solution,
-                compared_solutions,
-                _OPTIMIZATION_MODE_SELECTION_MAPPING[mode]
-            ), axis=1))
+    return np.all(
+        np.any(
+            _compare_in_dims(single_solution, compared_solutions, _OPTIMIZATION_MODE_SELECTION_MAPPING[mode],), axis=1,
+        )
+    )
 
 
 @jit
@@ -89,13 +87,16 @@ def collect_non_dominated_solutions(single_solution: np.array, compared_solution
 
     :return: solutions which are not dominated by given single solution
     """
-    is_dominated = np.any(_compare_in_dims(
-        single_solution,
-        compared_solutions,
-        comparison_operation=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode]
-    ), axis=1)
+    is_non_dominated = np.any(
+        np.logical_not(
+            _compare_in_dims(
+                single_solution, compared_solutions, comparison_operation=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode],
+            )
+        ),
+        axis=1,
+    )
 
-    return compared_solutions[np.where(np.logical_not(is_dominated))]
+    return compared_solutions[np.where(is_non_dominated)]
 
 
 def collect_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
@@ -106,11 +107,12 @@ def collect_dominated_solutions(single_solution: np.array, compared_solutions: n
 
     :return: Returns solutions which are dominated by given single solution
     """
-    is_dominated = np.any(_compare_in_dims(
-        single_solution,
-        compared_solutions,
-        comparison_operation=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode]
-    ), axis=1)
+    is_dominated = np.any(
+        _compare_in_dims(
+            single_solution, compared_solutions, comparison_operation=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode],
+        ),
+        axis=1,
+    )
 
     return compared_solutions[np.where(is_dominated)]
 
@@ -126,10 +128,6 @@ def assign_pareto_strength(single_solution: np.array, compared_solutions: np.arr
 
     :return: strength corresponding to given single_solution in given population
     """
-    dominated_solutions = collect_dominated_solutions(
-        single_solution,
-        compared_solutions,
-        mode=mode,
-    )
+    dominated_solutions = collect_dominated_solutions(single_solution, compared_solutions, mode=mode,)
 
     return dominated_solutions.shape[0]
