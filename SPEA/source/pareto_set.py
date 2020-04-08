@@ -6,6 +6,7 @@ class ParetoSet:
     """
     Class holds implementation of external Pareto set used by SPEA algorithm
     """
+
     def __init__(self, reducing_period: int, model_kwargs: dict = None):
         """
         :param reducing_period:
