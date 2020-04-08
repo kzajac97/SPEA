@@ -112,7 +112,7 @@ def collect_dominated_solutions(single_solution: np.array, compared_solutions: n
         axis=1,
     )
 
-    return np.where(is_dominated)
+    return np.where(is_dominated)[0]
 
 
 def assign_pareto_strength(single_solution: np.array, compared_solutions: np.array, mode: str) -> int:
@@ -127,5 +127,44 @@ def assign_pareto_strength(single_solution: np.array, compared_solutions: np.arr
     :return: strength corresponding to given single_solution in given population
     """
     dominated_solutions = collect_dominated_solutions(single_solution, compared_solutions, mode=mode,)
-
     return dominated_solutions.shape[0]
+
+
+def strength_binary_tournament_selection(population: np.array, mating_pool_size: int, mode: str) -> np.array:
+    """
+    Creates mating pool using binary tournament selection, where fitness is based on Pareto strength
+    Two randomly drawn solutions are selected and compared to each other,
+    fitter solution of each pair gets selected into mating pool
+
+    :param population: array of N solutions, each is solution is array
+    :param mating_pool_size: size of output mating pool
+    :param mode: optimization mode
+
+    :return: array of selected solutions
+    """
+    # select candidate solutions
+    candidate_solutions = population[np.random.randint(0, population.shape[0], mating_pool_size * 2)]
+    candidate_solutions = candidate_solutions.reshape(mating_pool_size * 2, population.shape[-1])
+    # assign strength to each candidate solution
+    strengths = np.apply_along_axis(assign_pareto_strength, 1, candidate_solutions, population, mode)
+    strengths = strengths.reshape(mating_pool_size, 2)
+    # select larger candidate in each pair
+    selected_candidates = np.argmax(strengths, axis=1)
+    selected_candidates += np.arange(0, mating_pool_size*2, 2)
+    #
+    return candidate_solutions[selected_candidates]
+
+
+def strength_n_fittest_selection(population: np.array, mating_pool_size: int, mode: str) -> np.array:
+    """
+    Creates mating pool using n fittest selection, where fitness is based on Pareto strength
+    Selects N fittest solutions from entire population, where N is chosen mating pool size
+
+    :param population: array of N solutions, each is solution is array
+    :param mating_pool_size: size of output mating pool
+    :param mode: optimization mode
+
+    :return: array of selected solutions
+    """
+    strengths = np.apply_along_axis(assign_pareto_strength, 1, population, population, mode)
+    return population[np.argsort(strengths)[:mating_pool_size], :]
