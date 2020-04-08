@@ -44,7 +44,6 @@ def _compare_in_dims(
     return np.array(results)
 
 
-@jit
 def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> Optional[bool]:
     """
     Boolean function testing if solution in dominated in Pareto's sense
@@ -67,7 +66,6 @@ def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.
     )
 
 
-@jit
 def is_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> Optional[bool]:
     """
     :return: Logical inverse of is_non_dominated_solution
@@ -85,7 +83,7 @@ def collect_non_dominated_solutions(single_solution: np.array, compared_solution
     :param compared_solutions: array of population solution will be compared to
     :param mode: optimization mode, valid options are `min` or `max`
 
-    :return: solutions which are not dominated by given single solution
+    :return: indices of solutions which are not dominated by given single solution
     """
     is_non_dominated = np.any(
         np.logical_not(
@@ -96,7 +94,7 @@ def collect_non_dominated_solutions(single_solution: np.array, compared_solution
         axis=1,
     )
 
-    return compared_solutions[np.where(is_non_dominated)]
+    return np.where(is_non_dominated)
 
 
 def collect_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
@@ -105,7 +103,7 @@ def collect_dominated_solutions(single_solution: np.array, compared_solutions: n
     :param compared_solutions: array of population solution will be compared to
     :param mode: optimization mode, valid options are `min` or `max`
 
-    :return: Returns solutions which are dominated by given single solution
+    :return: indices of solutions which are dominated by given single solution
     """
     is_dominated = np.any(
         _compare_in_dims(
@@ -114,7 +112,7 @@ def collect_dominated_solutions(single_solution: np.array, compared_solutions: n
         axis=1,
     )
 
-    return compared_solutions[np.where(is_dominated)]
+    return np.where(is_dominated)
 
 
 def assign_pareto_strength(single_solution: np.array, compared_solutions: np.array, mode: str) -> int:
