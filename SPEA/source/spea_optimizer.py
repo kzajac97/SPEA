@@ -3,19 +3,22 @@ from typing import Callable, Tuple
 import numpy as np
 
 from source.operators.continuous import crossover, mutation
+from source.operators.multiobjective import is_non_dominated_solution, collect_non_dominated_solutions, assign_pareto_strength
 
 
 class SPEAOptimizer:
     """
     """
 
-    def __init__(self, objective: Callable[[np.array], np.array], n_dim: int):
+    def __init__(self, objective: Callable[[np.array], np.array], n_dim: int, mode: str):
         """
 
         :param objective:
         :param n_dim:
+        :param mode:
         """
         self._objective = objective
+        self._optimization_mode = mode
         self._n_dim = n_dim
 
     def _init_population(self, population_size: int, initial_search_range: Tuple[Tuple[float, float], ...]) -> np.array:
@@ -39,8 +42,23 @@ class SPEAOptimizer:
 
         return population
 
-    def minimize(self, max_steps: int, initial_population_size: int):
-        population = self._init_population(initial_population_size, ((0, 10),))
+    def _collect_all_non_dominated_individuals(self, population: np.array) -> np.array:
+        """
 
-        for step in range(max_steps):
+        :param population:
+        :return:
+        """
+        solutions = np.apply_along_axis(self._objective, 1, population)
+        is_non_dominated = np.array([is_non_dominated_solution(
+            solution,
+            solutions,
+            mode=self._optimization_mode,
+        ) for solution in solutions])
+
+        return population[np.where(is_non_dominated == True)]
+
+    def optimize(self, steps: int, initial_population_size: int):
+        population = self._init_population(initial_population_size, ((0, 10), ))
+
+        for step in range(steps):
             ...
