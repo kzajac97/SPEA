@@ -15,12 +15,15 @@ https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropag
         """
         self._model = AffinityPropagation(**model_kwargs)
         self._reducing_period = reducing_period
-        self.solutions = np.array([])
+        self.solutions = None
 
     def update(self, collected_solutions: np.array) -> None:
         """
         Update Pareto set with new solutions
         """
+        if self.solutions is None:  # on first epoch
+            self.solutions = collected_solutions
+
         self.solutions = np.concatenate([self.solutions, collected_solutions])
 
     def _reduce(self):
@@ -28,7 +31,7 @@ https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropag
         Run clustering algorithm on Pareto set to reduce it
         """
         self._model.fit(self.solutions)
-        self.solutions = self._model.cluster_centers_
+        self.solutions = np.copy(self._model.cluster_centers_)
 
     def callback(self, epoch: int) -> np.array:
         """

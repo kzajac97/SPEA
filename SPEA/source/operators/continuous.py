@@ -1,6 +1,8 @@
 import numpy as np
 from numba import jit
 
+from source.utils.distance import row_wise_multiply
+
 
 @jit
 def crossover(individuals: np.array) -> np.array:
@@ -56,7 +58,7 @@ def vectorized_crossover(mating_pool: np.array, n_offspring: int) -> np.array:
 
     offsets = y - x
     lengths = np.random.normal(0.5, 0.25, n_offspring)
-    return np.apply_along_axis(np.multiply, 0, offsets, lengths) + x
+    return row_wise_multiply(offsets, lengths) + x
 
 
 def vectorized_mutation(population: np.array, mutation_strength: float = 0.1) -> np.array:

@@ -1,10 +1,11 @@
 from typing import Callable, Tuple
 
 import numpy as np
+from tqdm import tqdm
 
 from source.pareto_set import ParetoSet
 from source.operators.continuous import vectorized_crossover, vectorized_mutation
-from source.operators.multiobjective import is_non_dominated_solution, strength_n_fittest_selection
+from source.operators.multiobjective import is_non_dominated_solution, strength_n_fittest_selection, strength_binary_tournament_selection
 from source.utils.distance import range_size
 
 
@@ -23,6 +24,10 @@ class SPEAOptimizer:
         self._optimization_mode = mode
         self._n_dim = n_dim
         self._external_set = None
+        self._selection_operator = {
+            "n_fittest": strength_n_fittest_selection,
+            "binary_tournament": strength_binary_tournament_selection
+        }
 
     def _init_population(self, population_size: int, initial_search_range: Tuple[Tuple[float, float], ...]) -> np.array:
         """
@@ -75,45 +80,60 @@ class SPEAOptimizer:
 
         return population
 
-    def create_offspring(self, population: np.array, mating_pool_size: int, n_offspring: int) -> np.array:
+    def create_offspring(
+            self, population: np.array, mating_pool_size: int, n_offspring: int, selection_operator: str
+    ) -> np.array:
         """
         Create offspring solutions using crossover
 
         :param population: array of current solutions
         :param mating_pool_size: number of solutions taking part in crossover
         :param n_offspring: number of solutions created by crossover
+        :param selection_operator: selection algorithm
 
         :return: array of generated offspring solutions
         """
-        mating_pool = strength_n_fittest_selection(population, mating_pool_size, mode=self._optimization_mode)
+        mating_pool = self._selection_operator[selection_operator](population, mating_pool_size, mode=self._optimization_mode)
         return vectorized_crossover(mating_pool, n_offspring)
 
     def optimize(
         self,
         num_epochs: int,
-        initial_population_size: int,
+        population_size: int,
         crossover_rate: float,
         mutation_rate: float,
+        selection_operator: str,
         reducing_period: int,
         search_range: Tuple[Tuple[float, float], ...],
         mutation_strength: float = 0.1,
         relative_mutation_strength: bool = True,
         clustering_parameters: dict = None,
+        silent: bool = True,
     ):
-        population = self._init_population(initial_population_size, initial_search_range=search_range)
+        population = self._init_population(population_size, initial_search_range=search_range)
         self._external_set = ParetoSet(reducing_period=reducing_period, model_kwargs=clustering_parameters)
         mutation_strength = (
             range_size(search_range) * mutation_strength if relative_mutation_strength else mutation_strength
         )
 
-        for epoch in range(num_epochs):
+        for epoch in tqdm(range(num_epochs), disable=silent):
             pareto_solutions = self._collect_all_non_dominated_individuals(population)
             # update pareto set
             self._external_set.update(pareto_solutions)
             # use pareto set
-            population = np.concatenate(population, self._external_set.callback(epoch))
+            population = np.concatenate([population, self._external_set.callback(epoch)], axis=0)
             # crossover
-            population = self.create_offspring(population, int(crossover_rate * population), population.shape[0])
+            population = self.create_offspring(population, int(crossover_rate * len(population)), population_size, selection_operator)
             # mutation
             population = self.mutate_population(population, mutation_rate, mutation_strength)
             #
+
+        return strength_n_fittest_selection(population, 10, mode=self._optimization_mode)
+
+    def _check_args(self, **kwargs) -> None:
+        """
+
+        :param kwargs:
+        :return:
+        """
+        ...
