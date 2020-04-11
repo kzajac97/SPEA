@@ -93,8 +93,9 @@ class SPEAOptimizer:
 
         :return: array of generated offspring solutions
         """
-        mating_pool = self._selection_operator[selection_operator](population, mating_pool_size, mode=self._optimization_mode)
-        return vectorized_crossover(mating_pool, n_offspring)
+        solutions = np.apply_along_axis(self._objective, 1, population)
+        mating_pool = self._selection_operator[selection_operator](solutions, mating_pool_size, mode=self._optimization_mode)
+        return vectorized_crossover(population[mating_pool, :], n_offspring)
 
     def optimize(
         self,
@@ -109,7 +110,11 @@ class SPEAOptimizer:
         relative_mutation_strength: bool = True,
         clustering_parameters: dict = None,
         silent: bool = True,
+        logging: bool = True,
     ):
+        if logging:
+            records = []
+
         population = self._init_population(population_size, initial_search_range=search_range)
         self._external_set = ParetoSet(reducing_period=reducing_period, model_kwargs=clustering_parameters)
         mutation_strength = (
@@ -128,7 +133,7 @@ class SPEAOptimizer:
             population = self.mutate_population(population, mutation_rate, mutation_strength)
             #
 
-        return strength_n_fittest_selection(population, 10, mode=self._optimization_mode)
+        return population
 
     def _check_args(self, **kwargs) -> None:
         """

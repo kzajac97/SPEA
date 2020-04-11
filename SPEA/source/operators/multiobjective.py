@@ -66,6 +66,7 @@ def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.
     )
 
 
+# TODO: Refactor!
 def is_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> Optional[bool]:
     """
     :return: Logical inverse of is_non_dominated_solution
@@ -77,6 +78,7 @@ def is_dominated_solution(single_solution: np.array, compared_solutions: np.arra
     return not is_non_dominated_solution(single_solution, compared_solutions, mode)
 
 
+# TODO: Not used!
 def collect_non_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
     """
     :param single_solution: solution to compare
@@ -97,6 +99,7 @@ def collect_non_dominated_solutions(single_solution: np.array, compared_solution
     return np.where(is_non_dominated)
 
 
+# TODO: Not used!
 def collect_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
     """
     :param single_solution: solution to compare
@@ -115,6 +118,8 @@ def collect_dominated_solutions(single_solution: np.array, compared_solutions: n
     return np.where(is_dominated)[0]
 
 
+# TODO: There is an error in this function!
+#       It reversed mode
 def assign_pareto_strength(single_solution: np.array, compared_solutions: np.array, mode: str) -> int:
     """
     Assigns strength to each solution based on the number
@@ -140,7 +145,7 @@ def strength_binary_tournament_selection(population: np.array, mating_pool_size:
     :param mating_pool_size: size of output mating pool
     :param mode: optimization mode
 
-    :return: array of selected solutions
+    :return: indices of selected solutions
     """
     # select candidate solutions
     candidate_solutions = population[np.random.randint(0, population.shape[0], mating_pool_size * 2)]
@@ -152,7 +157,7 @@ def strength_binary_tournament_selection(population: np.array, mating_pool_size:
     selected_candidates = np.argmax(strengths, axis=1)
     selected_candidates += np.arange(0, mating_pool_size*2, 2)
     #
-    return candidate_solutions[selected_candidates]
+    return selected_candidates
 
 
 def strength_n_fittest_selection(population: np.array, mating_pool_size: int, mode: str) -> np.array:
@@ -164,7 +169,7 @@ def strength_n_fittest_selection(population: np.array, mating_pool_size: int, mo
     :param mating_pool_size: size of output mating pool
     :param mode: optimization mode
 
-    :return: array of selected solutions
+    :return: indices of selected solutions
     """
     strengths = np.apply_along_axis(assign_pareto_strength, 1, population, population, mode)
-    return population[np.argsort(strengths)[:mating_pool_size], :]
+    return np.argsort(strengths)[:mating_pool_size]
