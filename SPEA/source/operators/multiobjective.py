@@ -126,4 +126,4 @@ def strength_n_fittest_selection(population: np.array, mating_pool_size: int, mo
     :return: indices of selected solutions
     """
     strengths = np.apply_along_axis(assign_pareto_strength, 1, population, population, mode)
-    return np.argsort(strengths)[:mating_pool_size]
+    return np.argsort(-strengths, axis=0)[:mating_pool_size]
