@@ -135,6 +135,7 @@ def assign_pareto_strength(single_solution: np.array, compared_solutions: np.arr
     return dominated_solutions.shape[0]
 
 
+# TODO: Refactor to use case where indices are returned
 def strength_binary_tournament_selection(population: np.array, mating_pool_size: int, mode: str) -> np.array:
     """
     Creates mating pool using binary tournament selection, where fitness is based on Pareto strength
