@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.cluster import AffinityPropagation
 
 
+# TODO: Add other clustering algorithms
 class ParetoSet:
     """
     Class holds implementation of external Pareto set used by SPEA algorithm

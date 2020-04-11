@@ -13,6 +13,7 @@ class SPEAOptimizer:
     """
     """
 
+    # TODO: Docstring
     def __init__(self, objective: Callable[[np.array], np.array], n_dim: int, mode: str):
         """
 
@@ -50,6 +51,7 @@ class SPEAOptimizer:
 
         return population
 
+    # TODO: Docstring
     def _collect_all_non_dominated_individuals(self, population: np.array) -> np.array:
         """
 
@@ -97,6 +99,7 @@ class SPEAOptimizer:
         mating_pool = self._selection_operator[selection_operator](solutions, mating_pool_size, mode=self._optimization_mode)
         return vectorized_crossover(population[mating_pool, :], n_offspring)
 
+    # TODO: Move parameters to __init__, create better interface, docstring
     def optimize(
         self,
         num_epochs: int,
@@ -110,11 +113,8 @@ class SPEAOptimizer:
         relative_mutation_strength: bool = True,
         clustering_parameters: dict = None,
         silent: bool = True,
-        logging: bool = True,
+        logging: bool = False,  # TODO: Add logging options
     ):
-        if logging:
-            records = []
-
         population = self._init_population(population_size, initial_search_range=search_range)
         self._external_set = ParetoSet(reducing_period=reducing_period, model_kwargs=clustering_parameters)
         mutation_strength = (
