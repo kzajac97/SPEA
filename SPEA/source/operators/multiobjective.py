@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable
 
 import numpy as np
 from numba import jit
@@ -6,6 +6,8 @@ from numba import jit
 _OPTIMIZATION_MODE_SELECTION_MAPPING = {
     "min": np.less_equal,
     "max": np.greater_equal,
+    "strict_min": np.less,
+    "strict_max": np.greater,
 }
 
 
@@ -69,7 +71,8 @@ def is_dominated_solution(single_solution: np.array, compared_solutions: np.arra
 def assign_pareto_strength(single_solution: np.array, compared_solutions: np.array, mode: str) -> int:
     """
     Assigns strength to each solution based on the number
-    of other solutions it dominates over in it's population
+    of other solutions it dominates over in it's population,
+    lowest value is 1, because solution always dominates itself
 
     :param single_solution: solution to compare
     :param compared_solutions: array of population solution will be compared to
@@ -79,7 +82,7 @@ def assign_pareto_strength(single_solution: np.array, compared_solutions: np.arr
     """
     return np.count_nonzero(
         np.all(
-            _compare_in_dims(single_solution, compared_solutions, mode=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode]),
+            _compare_in_dims(single_solution, compared_solutions, _OPTIMIZATION_MODE_SELECTION_MAPPING[mode]),
             axis=1,
         )
     )
