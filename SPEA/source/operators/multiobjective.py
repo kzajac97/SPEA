@@ -1,10 +1,7 @@
-import logging
 from typing import Callable, Optional
 
 import numpy as np
 from numba import jit
-
-logger = logging.getLogger(__name__)
 
 _OPTIMIZATION_MODE_SELECTION_MAPPING = {
     "min": np.less_equal,
@@ -44,7 +41,7 @@ def _compare_in_dims(
     return np.array(results)
 
 
-def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> Optional[bool]:
+def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> bool:
     """
     Boolean function testing if solution in dominated in Pareto's sense
     Returns true if there no solution's in population with better objective value in each dimension
@@ -55,10 +52,6 @@ def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.
 
     :return: True is solutions in non dominated in Pareto's sense
     """
-    if mode not in _OPTIMIZATION_MODE_SELECTION_MAPPING.keys():
-        logger.error(f"{mode} is not valid optimization mode!")
-        return
-
     return np.all(
         np.any(
             _compare_in_dims(single_solution, compared_solutions, _OPTIMIZATION_MODE_SELECTION_MAPPING[mode],), axis=1,
@@ -66,60 +59,13 @@ def is_non_dominated_solution(single_solution: np.array, compared_solutions: np.
     )
 
 
-# TODO: Refactor!
-def is_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> Optional[bool]:
+def is_dominated_solution(single_solution: np.array, compared_solutions: np.array, mode: str) -> bool:
     """
     :return: Logical inverse of is_non_dominated_solution
     """
-    if mode not in _OPTIMIZATION_MODE_SELECTION_MAPPING.keys():
-        logger.error(f"{mode} is not valid optimization mode!")
-        return
-
     return not is_non_dominated_solution(single_solution, compared_solutions, mode)
 
 
-# TODO: Not used!
-def collect_non_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
-    """
-    :param single_solution: solution to compare
-    :param compared_solutions: array of population solution will be compared to
-    :param mode: optimization mode, valid options are `min` or `max`
-
-    :return: indices of solutions which are not dominated by given single solution
-    """
-    is_non_dominated = np.any(
-        np.logical_not(
-            _compare_in_dims(
-                single_solution, compared_solutions, comparison_operation=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode],
-            )
-        ),
-        axis=1,
-    )
-
-    return np.where(is_non_dominated)
-
-
-# TODO: Not used!
-def collect_dominated_solutions(single_solution: np.array, compared_solutions: np.array, mode: str) -> np.array:
-    """
-    :param single_solution: solution to compare
-    :param compared_solutions: array of population solution will be compared to
-    :param mode: optimization mode, valid options are `min` or `max`
-
-    :return: indices of solutions which are dominated by given single solution
-    """
-    is_dominated = np.any(
-        _compare_in_dims(
-            single_solution, compared_solutions, comparison_operation=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode],
-        ),
-        axis=1,
-    )
-
-    return np.where(is_dominated)[0]
-
-
-# TODO: There is an error in this function!
-#       It reversed mode
 def assign_pareto_strength(single_solution: np.array, compared_solutions: np.array, mode: str) -> int:
     """
     Assigns strength to each solution based on the number
@@ -131,8 +77,12 @@ def assign_pareto_strength(single_solution: np.array, compared_solutions: np.arr
 
     :return: strength corresponding to given single_solution in given population
     """
-    dominated_solutions = collect_dominated_solutions(single_solution, compared_solutions, mode=mode,)
-    return dominated_solutions.shape[0]
+    return np.count_nonzero(
+        np.all(
+            _compare_in_dims(single_solution, compared_solutions, mode=_OPTIMIZATION_MODE_SELECTION_MAPPING[mode]),
+            axis=1,
+        )
+    )
 
 
 # TODO: Refactor to use case where indices are returned
@@ -156,7 +106,7 @@ def strength_binary_tournament_selection(population: np.array, mating_pool_size:
     strengths = strengths.reshape(mating_pool_size, 2)
     # select larger candidate in each pair
     selected_candidates = np.argmax(strengths, axis=1)
-    selected_candidates += np.arange(0, mating_pool_size*2, 2)
+    selected_candidates += np.arange(0, mating_pool_size * 2, 2)
     #
     return selected_candidates
 
