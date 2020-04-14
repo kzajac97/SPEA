@@ -4,14 +4,14 @@ import numpy as np
 from numba import jit
 
 
-def range_size(search_range: Tuple[Tuple[float, float], ...]):
+def mean_search_space_size(search_range: Tuple[Tuple[float, float], ...]):
     """
 
     :param search_range:
     :return:
     """
     search_range = np.array(search_range)
-    return np.prod(search_range[:, 1] - search_range[:, 0])
+    return np.mean(search_range[:, 1] - search_range[:, 0])
 
 
 @jit
