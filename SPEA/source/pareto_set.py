@@ -1,20 +1,20 @@
+from typing import Any
+
 import numpy as np
-from sklearn.cluster import AffinityPropagation
 
 
-# TODO: Add other clustering algorithms
 class ParetoSet:
     """
     Class holds implementation of external Pareto set used by SPEA algorithm
     """
-
-    def __init__(self, reducing_period: int, model_kwargs: dict = None):
+    def __init__(self, reducing_period: int, model: Any, model_kwargs: dict = None):
         """
-        :param reducing_period:
-        :param model_kwargs: parameters to AffinityPropagation model, see:
-https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropagation.html#sklearn.cluster.AffinityPropagation
+        :param reducing_period: number of generations to wait for reducing Pareto Set
+        :param model: clustering model
+        :param model_kwargs: parameters to clustering model, see:
+        https://scikit-learn.org/stable/modules/clustering.html
         """
-        self._model = AffinityPropagation(**model_kwargs)
+        self._model = model(**model_kwargs)
         self._reducing_period = reducing_period
         self.solutions = None
 
@@ -34,11 +34,11 @@ https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropag
         self._model.fit(self.solutions)
         self.solutions = np.copy(self._model.cluster_centers_)
 
-    def callback(self, epoch: int) -> np.array:
+    def callback(self, n_generation: int) -> np.array:
         """
         Function called at each epoch in optimization loop
         """
-        if epoch % self._reducing_period == 0:
+        if n_generation % self._reducing_period == 0:
             self._reduce()
 
         return self.solutions

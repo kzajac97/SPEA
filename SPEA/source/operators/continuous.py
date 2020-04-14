@@ -5,7 +5,7 @@ from source.utils.distance import row_wise_multiply
 
 
 @jit
-def crossover(individuals: np.array) -> np.array:
+def hypersphere_crossover(individuals: np.array) -> np.array:
     """
     Crossover between two individual in floating point gene representation
 
@@ -24,7 +24,7 @@ def crossover(individuals: np.array) -> np.array:
 
 
 @jit
-def mutation(individual: np.array, mutation_strength: float = 0.1) -> np.array:
+def gaussian_mutation(individual: np.array, mutation_strength: float = 0.1) -> np.array:
     """
     Performs Gaussian mutation operation on single individual in floating point gene representation,
     Mutation works by drawing N samples from random normal distribution add adding in to individual
@@ -38,7 +38,7 @@ def mutation(individual: np.array, mutation_strength: float = 0.1) -> np.array:
     return mutation_strength * offset + individual
 
 
-def vectorized_crossover(mating_pool: np.array, n_offspring: int) -> np.array:
+def vectorized_hypersphere_crossover(mating_pool: np.array, n_offspring: int) -> np.array:
     """
     Crossover between two individuals applied to whole population in floating point gene representation
 
@@ -61,7 +61,7 @@ def vectorized_crossover(mating_pool: np.array, n_offspring: int) -> np.array:
     return row_wise_multiply(offsets, lengths) + x
 
 
-def vectorized_mutation(population: np.array, mutation_strength: float = 0.1) -> np.array:
+def vectorized_gaussian_mutation(population: np.array, mutation_strength: float = 0.1) -> np.array:
     """
     Performs Gaussian mutation operation on population of individuals in floating point gene representation,
     Mutation works by drawing N samples from random normal distribution add adding in to individual
