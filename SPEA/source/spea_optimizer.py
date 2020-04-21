@@ -107,8 +107,9 @@ class SPEAOptimizer:
         :param n_solutions: number of solutions in Pareto front
         """
         # selection operator use to return N best solutions to form pareto from
-        pareto_solutions = strength_n_fittest_selection(self.population, n_solutions, self._optimization_mode)
-        return np.take(self.population, pareto_solutions)
+        solutions = np.apply_along_axis(self._objective, 1, self.population)
+        pareto_solutions = strength_n_fittest_selection(solutions, n_solutions, self._optimization_mode)
+        return np.take(self.population, pareto_solutions, axis=0)
 
     @property
     def population_size(self):
