@@ -128,7 +128,7 @@ class SPEAOptimizer:
         mutation_strength: float = 0.1,
         clustering_parameters: dict = None,
         silent: bool = True,
-        logging: bool = False,  # TODO: Add logging options
+        logging: bool = False,
         logging_path: Union[str, Path] = None,
     ) -> None:
         """
