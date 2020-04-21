@@ -58,4 +58,4 @@ def array_subset(array: np.array, subarray: np.array) -> np.array:
         1,
         array,
         subarray
-    )
+    ).astype(bool)

@@ -13,7 +13,7 @@ from source.operators.multiobjective import (
     strength_n_fittest_selection,
     strength_binary_tournament_selection,
 )
-from source.utils import dims_to_column_names
+from source.utils import array_subset, dims_to_column_names, flatten
 
 _SELECTION_OPERATOR_MAPPING = {
     "n_fittest": strength_n_fittest_selection,
@@ -157,24 +157,37 @@ class SPEAOptimizer:
                 self.population, int(crossover_rate * len(self.population)), population_size
             )
             self.population = self._mutate_population(self.population, mutation_rate, mutation_strength)
-            # log data
 
+            # log data
             if logging:
-                self._log_data(self.population, logging_path, generation)
+                self._log_data(logging_path, generation)
 
         return
 
     # private utils
-    def _log_data(self, population, path: Union[str, Path], generation: int) -> None:
-        solutions = np.apply_along_axis(self._objective, 1, population)
-        print(f"Logging\npopulation: {population.shape}\nsolution: {solutions.shape}\nepochs: {np.array([generation] * len(population)).shape}")
+    def _log_data(self, path: Union[str, Path], generation: int) -> None:
+        """
+        Save population to .csv file using tidy log data frame format
 
-        logs_df = pd.DataFrame.from_records(
-            np.column_stack([self.population, solutions, np.array([generation] * len(population))]),
-            columns=list(dims_to_column_names(self.population) + dims_to_column_names(solutions) + ["epoch"]),
+        :param path: path to file with logged population
+        :param generation: number of current generation
+        """
+        data = np.column_stack([
+            flatten(self.population),
+            flatten(np.apply_along_axis(self._objective, 1, self.population)),
+            np.array([generation] * len(self.population)),
+            array_subset(self.population, self._external_set.solutions).astype(str)
+        ])
+
+        columns_names = list(
+            dims_to_column_names(flatten(self.population))
+            + dims_to_column_names(flatten(np.apply_along_axis(self._objective, 1, self.population)))
+            + ["generation"]
+            + ["pareto"]
         )
 
-        logs_df.to_csv(path, index=False)
+        logs_df = pd.DataFrame.from_records(data, columns=columns_names)
+        logs_df.to_csv(path, index=False, mode="a")
 
     # Evolutionary Computation Methods
     def _init_population(self, population_size: int, initial_search_range: Tuple[Tuple[float, float], ...]) -> np.array:
