@@ -1,7 +1,7 @@
 import numpy as np
 from numba import jit
 
-from source.utils.distance import row_wise_multiply
+from source.utils import row_wise_multiply
 
 
 @jit
