@@ -34,3 +34,27 @@ def dims_to_column_names(array: np.array) -> list:
     :return: conventional axes names for ND array
     """
     return list(string.ascii_lowercase[X_ALPHABET_SHIFT: X_ALPHABET_SHIFT + array.ndim])
+
+
+def flatten(array: np.array) -> np.array:
+    """
+    Example:
+        >>> array.shape
+        ... (100, 3, 1)
+        >>> flatten(array).shape
+        ... (100, 3)
+    :return: reshape array to have one less dimension
+    """
+    return np.reshape(array, array.shape[:-1])
+
+
+def array_subset(array: np.array, subarray: np.array) -> np.array:
+    """
+    :return: boolean array containing information if array element is in subarray
+    """
+    return np.apply_along_axis(
+        lambda element, test_subarray: np.any(np.all(np.equal(element, test_subarray), axis=1)),
+        1,
+        array,
+        subarray
+    )
