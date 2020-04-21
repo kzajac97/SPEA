@@ -1,7 +1,9 @@
+from pathlib import Path
 from typing import Any, Callable, Union, Tuple
 
 import numpy as np
-from sklearn.cluster import AffinityPropagation, KMeans, SpectralClustering
+import pandas as pd
+from sklearn.cluster import AffinityPropagation, KMeans, MeanShift, SpectralClustering
 from tqdm import tqdm
 
 from source.pareto_set import ParetoSet
@@ -11,7 +13,7 @@ from source.operators.multiobjective import (
     strength_n_fittest_selection,
     strength_binary_tournament_selection,
 )
-
+from source.utils import array_subset, dims_to_column_names, flatten
 
 _SELECTION_OPERATOR_MAPPING = {
     "n_fittest": strength_n_fittest_selection,
@@ -26,6 +28,7 @@ _CROSSOVER_OPERATOR_MAPPING = {
 _CLUSTER_METHOD_MAPPING = {
     "affinity_propagation": AffinityPropagation,
     "kmeans": KMeans,
+    "mean_shift": MeanShift,
     "spectral": SpectralClustering,
 }
 
@@ -126,7 +129,8 @@ class SPEAOptimizer:
         clustering_parameters: dict = None,
         silent: bool = True,
         logging: bool = False,  # TODO: Add logging options
-    ):
+        logging_path: Union[str, Path] = None,
+    ) -> None:
         """
         Run multi objective optimization of callable function for given class instance
 
@@ -140,6 +144,7 @@ class SPEAOptimizer:
         :param clustering_parameters: parameters of clustering algorithm
         :param silent: if False, print progress bar during execution
         :param logging: if True, save population, variables and pareto set at each generation in history property
+        :param logging_path: path to .csv file where logs will be saved
         """
         self.population = self._init_population(population_size, initial_search_range=search_range)
         self._external_set = ParetoSet(reducing_period, self.clustering_method, model_kwargs=clustering_parameters)
@@ -152,10 +157,37 @@ class SPEAOptimizer:
                 self.population, int(crossover_rate * len(self.population)), population_size
             )
             self.population = self._mutate_population(self.population, mutation_rate, mutation_strength)
-            #
 
-        if logging:
-            return self.history
+            # log data
+            if logging:
+                self._log_data(logging_path, generation)
+
+        return
+
+    # private utils
+    def _log_data(self, path: Union[str, Path], generation: int) -> None:
+        """
+        Save population to .csv file using tidy log data frame format
+
+        :param path: path to file with logged population
+        :param generation: number of current generation
+        """
+        data = np.column_stack([
+            flatten(self.population),
+            flatten(np.apply_along_axis(self._objective, 1, self.population)),
+            np.array([generation] * len(self.population)),
+            array_subset(self.population, self._external_set.solutions).astype(str)
+        ])
+
+        columns_names = list(
+            dims_to_column_names(flatten(self.population))
+            + dims_to_column_names(flatten(np.apply_along_axis(self._objective, 1, self.population)))
+            + ["generation"]
+            + ["pareto"]
+        )
+
+        logs_df = pd.DataFrame.from_records(data, columns=columns_names)
+        logs_df.to_csv(path, index=False, mode="a")
 
     # Evolutionary Computation Methods
     def _init_population(self, population_size: int, initial_search_range: Tuple[Tuple[float, float], ...]) -> np.array:
