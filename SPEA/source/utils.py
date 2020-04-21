@@ -45,7 +45,8 @@ def flatten(array: np.array) -> np.array:
         ... (100, 3)
     :return: reshape array to have one less dimension
     """
-    return np.reshape(array, array.shape[:-1])
+    array_copy = np.copy(array)  # do not change real data!
+    return np.reshape(array_copy, array_copy.shape[:-1])
 
 
 def array_subset(array: np.array, subarray: np.array) -> np.array:
