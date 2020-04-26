@@ -189,22 +189,26 @@ class SPEAOptimizer:
         :param path: path to file with logged population
         :param generation: number of current generation
         """
+        logged_population = np.concatenate([self.population, self._external_set.solutions], axis=0)
+
         data = np.column_stack([
-            flatten(self.population),
-            flatten(np.apply_along_axis(self._objective, 1, self.population)),
-            np.array([generation] * len(self.population)),
-            array_subset(self.population, self._external_set.solutions).astype(str)
+            flatten(logged_population),
+            flatten(np.apply_along_axis(self._objective, 1, logged_population)),
+            np.array([generation] * len(logged_population)),
+            array_subset(logged_population, self._external_set.solutions).astype(str)
         ])
 
         columns_names = list(
-            dims_to_column_names(flatten(self.population))
-            + dims_to_column_names(flatten(np.apply_along_axis(self._objective, 1, self.population)))
+            dims_to_column_names(flatten(logged_population), lowercase=False)
+            + dims_to_column_names(flatten(np.apply_along_axis(self._objective, 1, logged_population)))
             + ["generation"]
             + ["pareto"]
         )
 
         logs_df = pd.DataFrame.from_records(data, columns=columns_names)
-        logs_df.to_csv(path, index=False, mode="a")
+        if generation == 0:  # save header only on first generation
+            logs_df.to_csv(path, index=False, header=True, mode="a")
+        logs_df.to_csv(path, index=False, header=False, mode="a")
 
     def _set_rate(self, schedule: Any, *args):
         """
