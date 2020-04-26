@@ -13,6 +13,7 @@ from source.operators.multiobjective import (
     strength_n_fittest_selection,
     strength_binary_tournament_selection,
 )
+from source.operators.schedules import const_schedule, increasing_linear_schedule, decreasing_linear_schedule
 from source.utils import array_subset, dims_to_column_names, flatten
 
 _SELECTION_OPERATOR_MAPPING = {
@@ -97,9 +98,14 @@ class SPEAOptimizer:
         self._crossover_operator = (
             _CROSSOVER_OPERATOR_MAPPING[crossover_operator] if type(crossover_operator) is str else crossover_operator
         )
-        self.clustering_method = (
+        self._clustering_method = (
             _CLUSTER_METHOD_MAPPING[clustering_method] if type(clustering_method) is str else clustering_method
         )
+        self._schedules = {
+            "const": const_schedule,
+            "increasing_linear": increasing_linear_schedule,
+            "decreasing_linear": decreasing_linear_schedule,
+        }
 
     @property
     def pareto_front(self) -> np.array:
@@ -125,6 +131,9 @@ class SPEAOptimizer:
         search_range: Tuple[Tuple[float, float], ...],
         mutation_strength: float = 0.1,
         clustering_parameters: dict = None,
+        mutation_schedule: Union[str, Callable[[Tuple[Any, ...]], float]] = "const",
+        strength_schedule: Union[str, Callable[[Tuple[Any, ...]], float]] = "const",
+        crossover_schedule: Union[str, Callable[[Tuple[Any, ...]], float]] = "const",
         silent: bool = True,
         logging: bool = False,
         logging_path: Union[str, Path] = None,
@@ -140,22 +149,32 @@ class SPEAOptimizer:
         :param search_range: tuple of ranges in all dimensions
         :param mutation_strength: strength of mutation operation, should be adjusted based on search space size
         :param clustering_parameters: parameters of clustering algorithm
+        :param mutation_schedule: function of mutation rate for generations,
+                                  if string accepted values are `const`, `increasing_linear` and `decreasing_linear`
+                                  if callable must take in three arguments and return one
+        :param strength_schedule: function of mutation strength for generations
+        :param crossover_schedule:  function of crossover rate for generations
         :param silent: if False, print progress bar during execution
         :param logging: if True, save population, variables and pareto set at each generation in history property
         :param logging_path: path to .csv file where logs will be saved
         """
         self.population = self._init_population(population_size, initial_search_range=search_range)
-        self._external_set = ParetoSet(reducing_period, self.clustering_method, model_kwargs=clustering_parameters)
+        self._external_set = ParetoSet(reducing_period, self._clustering_method, model_kwargs=clustering_parameters)
 
         for generation in tqdm(range(generations), disable=silent):
+            # Update operator rates
+            current_mutation_rate = self._set_rate(mutation_schedule, generation, mutation_rate, generations)
+            current_crossover_rate = self._set_rate(crossover_schedule, generation, crossover_rate, generations)
+            current_mutation_strength = self._set_rate(strength_schedule, generation, mutation_strength, generations)
+            # Collect Pareto solutions
             pareto_solutions = self._collect_all_non_dominated_individuals(self.population)
             self._external_set.update(pareto_solutions)
+            # Run operators
             self.population = np.concatenate([self.population, self._external_set.callback(generation)], axis=0)
             self.population = self._create_offspring(
-                self.population, int(crossover_rate * len(self.population)), population_size
+                self.population, int(current_crossover_rate * len(self.population)), population_size
             )
-            self.population = self._mutate_population(self.population, mutation_rate, mutation_strength)
-
+            self.population = self._mutate_population(self.population, current_mutation_rate, current_mutation_strength)
             # log data
             if logging:
                 self._log_data(logging_path, generation)
@@ -186,6 +205,18 @@ class SPEAOptimizer:
 
         logs_df = pd.DataFrame.from_records(data, columns=columns_names)
         logs_df.to_csv(path, index=False, mode="a")
+
+    def _set_rate(self, schedule: Any, *args):
+        """
+
+        :param schedule:
+        :param args:
+        :return:
+        """
+        if type(schedule) == str:
+            return self._schedules[schedule](*args)
+
+        return schedule(*args)
 
     # Evolutionary Computation Methods
     def _init_population(self, population_size: int, initial_search_range: Tuple[Tuple[float, float], ...]) -> np.array:
