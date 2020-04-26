@@ -101,15 +101,12 @@ class SPEAOptimizer:
             _CLUSTER_METHOD_MAPPING[clustering_method] if type(clustering_method) is str else clustering_method
         )
 
-    # Public Interface
-    def pareto_front(self, n_solutions: int) -> np.array:
+    @property
+    def pareto_front(self) -> np.array:
         """
-        :param n_solutions: number of solutions in Pareto front
+        :return: all non dominated solutions from final generation
         """
-        # selection operator use to return N best solutions to form pareto from
-        solutions = np.apply_along_axis(self._objective, 1, self.population)
-        pareto_solutions = strength_n_fittest_selection(solutions, n_solutions, self._optimization_mode)
-        return np.take(self.population, pareto_solutions, axis=0)
+        return self._collect_all_non_dominated_individuals(self.population)
 
     @property
     def population_size(self):
