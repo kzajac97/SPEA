@@ -27,7 +27,7 @@ def _get_all_variables(expressions: list, ordering: Union[str, list]):
 def parse_expression(expression: str) -> Expression:
     """
     :example:
-        >>> equation = Expression("2*X + sin(Y) + exp(Z)")
+        >>> equation = parse_expression("2*X + sin(Y) + exp(Z)")
         >>> equation([1, 1, 1])
         ... 5.56
     :return:
@@ -40,7 +40,7 @@ def parse_vector_expression(
 ) -> VectorExpression:
     """
     :example:
-        >>> vector_expression = parse_symbolic_vector_function(
+        >>> vector_expression = parse_vector_expression(
         ...  ["2*X + sin(Y)",
         ...   "5*Y + log(Z)",
         ...   "exp(X)",
