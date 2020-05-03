@@ -26,11 +26,13 @@ def _get_all_variables(expressions: list, ordering: Union[str, list]):
 
 def parse_expression(expression: str) -> Expression:
     """
+    Parsers symbolic expression into callable object
     :example:
         >>> equation = parse_expression("2*X + sin(Y) + exp(Z)")
         >>> equation([1, 1, 1])
         ... 5.56
-    :return:
+
+    :return: callableExpression object
     """
     return Expression(expression)
 
@@ -39,6 +41,8 @@ def parse_vector_expression(
         functions: List[str], ordering: Union[str, list] = "mathematical"
 ) -> VectorExpression:
     """
+    Parsers list of symbolic expressions into callable object
+
     :example:
         >>> vector_expression = parse_vector_expression(
         ...  ["2*X + sin(Y)",
