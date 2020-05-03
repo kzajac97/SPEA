@@ -29,11 +29,14 @@ def mean_search_space_size(search_range: Tuple[Tuple[float, float], ...]):
     return np.mean(search_range[:, 1] - search_range[:, 0])
 
 
-def dims_to_column_names(array: np.array) -> list:
+def dims_to_column_names(array: np.array, lowercase: bool = True) -> list:
     """
     :return: conventional axes names for ND array
     """
-    return list(string.ascii_lowercase[X_ALPHABET_SHIFT: X_ALPHABET_SHIFT + array.ndim])
+    if lowercase:
+        return list(string.ascii_lowercase[X_ALPHABET_SHIFT: X_ALPHABET_SHIFT + array.ndim])
+
+    return list(string.ascii_uppercase[X_ALPHABET_SHIFT: X_ALPHABET_SHIFT + array.ndim])
 
 
 def flatten(array: np.array) -> np.array:
