@@ -1,10 +1,8 @@
 import string
 import re
-from typing import Union
+from typing import List, Union
 
-import numpy as np
-
-from source.parser.expression import Expression
+from source.parser.expression import Expression, VectorExpression
 
 X_ALPHABETICAL_INDEX = 23
 
@@ -15,39 +13,48 @@ _VARIABLE_ORDERING_KEYS = {
 }
 
 
-class Parser:
+def _get_all_variables(expressions: list, ordering: Union[str, list]):
     """
-    Parser for multi dimensional symbolic vector functions
+    :return: list of all variables found in expressions
+    """
+    variables = []
+    for expression in expressions:
+        variables.extend(re.findall(r"[A-Z]", expression))
 
+    return sorted(list(set(variables)), key=lambda item: ordering.index(item))
+
+
+def parse_expression(expression: str) -> Expression:
+    """
     :example:
-        >>> parser = Parser(["2*X + sin(Y)", "5*Y + log(Z)", "exp(X)", "-1*Z / X"], ordering="mathematical")
-        >>> parser([1, 1, 1])
+        >>> equation = Expression("2*X + sin(Y) + exp(Z)")
+        >>> equation([1, 1, 1])
+        ... 5.56
+    :return:
+    """
+    return Expression(expression)
+
+
+def parse_vector_expression(
+        functions: List[str], ordering: Union[str, list] = "mathematical"
+) -> VectorExpression:
+    """
+    :example:
+        >>> vector_expression = parse_symbolic_vector_function(
+        ...  ["2*X + sin(Y)",
+        ...   "5*Y + log(Z)",
+        ...   "exp(X)",
+        ...   "-1*Z / X"],
+        ... ordering="mathematical")
+        >>> vector_expression([1, 1, 1])
         ... array([2.8, 5.0, 2.7, -1.0], dtype=object)
 
-    :warning: variables must be uppercase and multiplication is required
+    :param functions: list of vector functions
+    :param ordering: variable ordering, can be str to choose from defaults
+                     or list of string for custom ordering
+
+    :return: callable VectorExpression object
     """
-    def __init__(self, expressions: list, ordering: Union[str, list] = "mathematical"):
-        """
-        :param expressions: list of symbolic expressions
-        :param ordering: variable ordering, can be str to choose from defaults
-                         or list of string for custom ordering
-        """
-        self._variable_ordering = _VARIABLE_ORDERING_KEYS[ordering] if type(ordering) is str else ordering
-        self._variables = self._get_all_variables(expressions)
-        self._expressions = [Expression(expression, self._variables) for expression in expressions]
-
-    def _get_all_variables(self, expressions: list):
-        """
-        :return: list of all variables found in expressions
-        """
-        variables = []
-        for expression in expressions:
-            variables.extend(re.findall(r"[A-Z]", expression))
-
-        return sorted(list(set(variables)), key=lambda item: self._variable_ordering.index(item))
-
-    def __call__(self, values):
-        """
-        :param values: values at which to evaluate symbolic expression
-        """
-        return np.array([expression(values) for expression in self._expressions])
+    ordering = _VARIABLE_ORDERING_KEYS[ordering] if type(ordering) is str else ordering
+    variables = _get_all_variables(functions, ordering)
+    return VectorExpression(expressions=functions, variables=variables, ordering=ordering)

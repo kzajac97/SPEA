@@ -1,4 +1,5 @@
 import re
+from typing import Union
 
 import numpy as np
 import sympy
@@ -7,11 +8,6 @@ import sympy
 class Expression:
     """
     Callable class for parsing symbolic expressions using sympy syntax
-
-    :example:
-        >>> equation = Expression("2*X + sin(Y) + exp(Z)")
-        >>> equation([1, 1, 1])
-        ... 5.56
 
     :warning: variables must be uppercase and multiplication is required
     """
@@ -33,3 +29,26 @@ class Expression:
         :param values: values at which to evaluate symbolic expression
         """
         return sympy.N(self._expression.translate(str.maketrans(self._get_translation_dict(values))))
+
+
+class VectorExpression:
+    """
+    Object holding parsed multi dimensional symbolic vector functions
+
+    :warning: variables must be uppercase and multiplication is required
+    """
+    def __init__(self, expressions: list, variables: list, ordering: Union[str, list]):
+        """
+        :param expressions: list of symbolic expressions
+        :param ordering: variable ordering, can be str to choose from defaults
+                         or list of string for custom ordering
+        """
+        self._variable_ordering = ordering
+        self._variables = variables
+        self._expressions = [Expression(expression, self._variables) for expression in expressions]
+
+    def __call__(self, values):
+        """
+        :param values: values at which to evaluate symbolic expression
+        """
+        return np.array([expression(values) for expression in self._expressions])
