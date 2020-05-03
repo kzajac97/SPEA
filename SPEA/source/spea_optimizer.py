@@ -212,10 +212,12 @@ class SPEAOptimizer:
 
     def _set_rate(self, schedule: Any, *args):
         """
+        Sets operator rate value
 
-        :param schedule:
-        :param args:
-        :return:
+        :param schedule: str or Callable returning schedule values for generation
+        :param args: args to schedule function
+
+        :return: operator rate value for given generation according to its schedule
         """
         if type(schedule) == str:
             return self._schedules[schedule](*args)
