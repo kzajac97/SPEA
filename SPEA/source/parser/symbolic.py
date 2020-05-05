@@ -32,7 +32,7 @@ def parse_expression(expression: str) -> Expression:
         >>> equation([1, 1, 1])
         ... 5.56
 
-    :return: callableExpression object
+    :return: callable Expression object
     """
     return Expression(expression)
 
